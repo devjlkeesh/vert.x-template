@@ -8,19 +8,16 @@ import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 
 public class AuthUserRepository {
-    private final Pool pooledClient;
     private final PreparedQuery<RowSet<Row>> insertPreparedStatement;
     private final PreparedQuery<RowSet<Row>> findByUsernamePreparedQuery;
     private final PreparedQuery<RowSet<Row>> findAllPreparedQuery;
 
     public AuthUserRepository(Pool pooledClient) {
-        this.pooledClient = pooledClient;
         this.insertPreparedStatement = pooledClient.preparedQuery("INSERT INTO auth_users (username, email, password, roles, permissions) VALUES ($1, $2, $3, $4, $5) RETURNING id ;");
         this.findByUsernamePreparedQuery = pooledClient.preparedQuery("SELECT * FROM auth_users WHERE username = $1 ;");
         this.findAllPreparedQuery = pooledClient.preparedQuery("SELECT * FROM auth_users ;");
@@ -39,15 +36,7 @@ public class AuthUserRepository {
                 .flatMap(rows -> {
                     if (rows.size() > 0) {
                         Row row = rows.iterator().next();
-                        AuthUserData authUserData = new AuthUserData(
-                                row.getLong("id"),
-                                row.getString("username"),
-                                row.getString("email"),
-                                row.getString("password"),
-                                Arrays.stream(row.getString("roles").split(",")).toList(),
-                                Arrays.stream(row.getString("permissions").split(",")).toList()
-                        );
-                        return Future.succeededFuture(authUserData);
+                        return Future.succeededFuture(AuthUserRowMapper.toAuthUserData(row));
                     } else {
                         return Future.failedFuture("User not found");
                     }

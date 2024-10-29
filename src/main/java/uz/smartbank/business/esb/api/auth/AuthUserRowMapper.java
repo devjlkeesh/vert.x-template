@@ -5,6 +5,7 @@ import io.vertx.sqlclient.Row;
 import java.util.Arrays;
 
 public final class AuthUserRowMapper {
+
     private AuthUserRowMapper() {
         throw new IllegalStateException("Utility class");
     }
